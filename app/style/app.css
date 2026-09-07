@@ -1,0 +1,503 @@
+/* app.css — dark chrome to sit under the CARTO dark-matter basemap. */
+
+:root {
+  --bg: #0b0d10;
+  --panel: rgba(18, 21, 26, 0.9);
+  --border: rgba(255, 255, 255, 0.14);
+  --fg: #e8eaed;
+  --muted: #9aa3ad;
+  --accent: #d0d6dd;
+}
+
+* { box-sizing: border-box; }
+
+/* The `hidden` attribute is only `display: none` by UA default, so ANY explicit
+ * display on the element beats it — #timeline sets `display: flex` and was
+ * showing an empty bar before the timeline had ever been opened. Make the
+ * attribute authoritative so this can't come back on the next flex panel. */
+[hidden] { display: none !important; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--fg);
+  font: 13px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+#map { position: absolute; inset: 0; }
+
+/* ---------- panels ---------- */
+
+.panel {
+  position: absolute;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
+}
+
+#header {
+  top: 12px;
+  left: 12px;
+  padding: 12px 14px;
+  max-width: 330px;
+}
+
+#header h1 {
+  margin: 0 0 3px;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+#header p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 11.5px;
+}
+
+/* ---------- toggle ---------- */
+
+.toggle {
+  display: flex;
+  gap: 6px;
+  margin-top: 11px;
+}
+
+.toggle button {
+  flex: 1;
+  padding: 7px 9px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--muted);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+  text-align: left;
+  line-height: 1.3;
+}
+
+.toggle button:hover { background: rgba(255, 255, 255, 0.09); color: var(--fg); }
+
+.toggle button.active {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.4);
+  color: #fff;
+}
+
+.toggle button b { display: block; font-size: 12.5px; font-weight: 600; }
+.toggle button span { font-size: 10.5px; opacity: 0.8; }
+
+.views { display: flex; gap: 6px; margin-top: 8px; }
+
+.views button {
+  flex: 1;
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.views button:hover { background: rgba(255, 255, 255, 0.08); color: var(--fg); }
+
+.views button.active {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.34);
+  color: #fff;
+}
+
+.views button.busy { opacity: 0.6; cursor: progress; }
+
+.views button.busy::after {
+  content: " …";
+}
+
+#buildings-hint {
+  margin-top: 7px;
+  font-size: 10px;
+  color: var(--muted);
+  font-style: italic;
+}
+
+/* ---------- legend ---------- */
+
+#legend {
+  bottom: 30px;
+  left: 12px;
+  padding: 11px 13px 9px;
+  width: 330px;
+}
+
+#legend-title { font-size: 11.5px; font-weight: 600; margin-bottom: 8px; }
+
+#legend-bar {
+  height: 11px;
+  border-radius: 3px;
+  border: 1px solid var(--border);
+}
+
+#legend-ticks {
+  position: relative;
+  height: 15px;
+  margin-top: 3px;
+  font-size: 10px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+#legend-ticks .tick {
+  position: absolute;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+#legend-ends {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 1px;
+}
+
+#legend-note {
+  margin-top: 6px;
+  font-size: 10px;
+  color: var(--muted);
+  font-style: italic;
+}
+
+#readout {
+  margin-top: 7px;
+  padding-top: 7px;
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+#readout b { color: var(--accent); font-weight: 600; }
+.ro-sub { opacity: 0.65; }
+
+/* ---------- timeline ---------- */
+
+#timeline {
+  bottom: 30px;
+  left: 354px;
+  right: 12px;
+  max-width: 560px;
+  padding: 9px 11px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+#tl-play {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.34);
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+#tl-play:hover { background: rgba(255, 255, 255, 0.24); }
+
+#tl-main { flex: 1; min-width: 0; }
+
+#tl-range {
+  width: 100%;
+  margin: 0;
+  accent-color: #6fd3ff;
+  cursor: pointer;
+}
+
+#tl-labels {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 2px;
+  font-size: 10px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+#tl-date { color: var(--accent); font-weight: 600; }
+
+#tl-exit {
+  flex: none;
+  padding: 6px 9px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+#tl-exit:hover { background: rgba(255, 255, 255, 0.09); color: var(--fg); }
+
+@media (max-width: 900px) {
+  #timeline { left: 12px; right: 12px; bottom: 12px; max-width: none; }
+  #legend { bottom: 84px; }
+}
+
+/* ---------- status ---------- */
+
+#status {
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 7px 13px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+#status.error {
+  color: #ffb4a8;
+  border-color: rgba(255, 120, 100, 0.5);
+  max-width: 60ch;
+}
+
+.tt-sub { color: #9aa3ad; }
+
+/* ---------- intro panel ---------- */
+
+#intro-open {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--muted);
+  font: inherit;
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+#intro-open:hover { background: rgba(255, 255, 255, 0.16); color: var(--fg); }
+
+#intro-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(6, 8, 11, 0.55);
+  backdrop-filter: blur(1.5px);
+  z-index: 5;
+}
+
+#intro {
+  z-index: 6;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(430px, calc(100% - 32px));
+  max-height: calc(100% - 40px);
+  overflow-y: auto;
+  padding: 18px 20px 16px;
+}
+
+#intro h2 {
+  margin: 0 0 6px;
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+#intro h3 {
+  margin: 15px 0 4px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--muted);
+}
+
+#intro p, #intro li {
+  margin: 0 0 6px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: #ced4db;
+}
+
+#intro ul { margin: 0; padding-left: 16px; }
+#intro li { margin-bottom: 5px; }
+#intro b { color: var(--fg); font-weight: 600; }
+
+#intro-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  border-radius: 4px;
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+#intro-close:hover { background: rgba(255, 255, 255, 0.1); color: var(--fg); }
+
+#intro-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+#intro-foot span {
+  font-size: 10.5px;
+  color: var(--muted);
+  line-height: 1.35;
+}
+
+#intro-go {
+  flex: none;
+  padding: 7px 13px;
+  border: 1px solid rgba(255, 255, 255, 0.34);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+#intro-go:hover { background: rgba(255, 255, 255, 0.24); }
+
+/* ---------- time-series panel ---------- */
+
+#ts {
+  top: 12px;
+  right: 52px;
+  width: 384px;
+  padding: 11px 12px 10px;
+}
+
+#ts-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+#ts-title {
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+#ts-meta {
+  display: flex;
+  gap: 9px;
+  margin-top: 2px;
+  font-size: 10.5px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+#ts-close {
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  border-radius: 4px;
+  width: 22px;
+  height: 22px;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  flex: none;
+}
+
+#ts-close:hover { background: rgba(255, 255, 255, 0.1); color: var(--fg); }
+
+.ts-svg { width: 100%; height: auto; display: block; overflow: visible; }
+
+.ts-line { fill: none; stroke: #6fd3ff; stroke-width: 1.4; stroke-linejoin: round; }
+.ts-trend { stroke: #ff9d6b; stroke-width: 1.2; stroke-dasharray: 4 3; opacity: 0.9; }
+.ts-grid { stroke: rgba(255, 255, 255, 0.09); stroke-width: 1; }
+.ts-zero { stroke: rgba(255, 255, 255, 0.28); stroke-width: 1; }
+
+.ts-ylab, .ts-xlab {
+  fill: var(--muted);
+  font-size: 9px;
+  font-family: inherit;
+  font-variant-numeric: tabular-nums;
+}
+
+.ts-ylab { text-anchor: end; }
+
+.ts-empty {
+  padding: 34px 0;
+  text-align: center;
+  color: var(--muted);
+  font-size: 11.5px;
+}
+
+.ts-empty.err { color: #ffb4a8; }
+
+#ts-note {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 6px;
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.ts-key { display: inline-flex; align-items: center; gap: 5px; }
+
+.ts-key i {
+  width: 13px;
+  height: 0;
+  border-top-width: 2px;
+  display: inline-block;
+}
+
+.k-line { border-top: 2px solid #6fd3ff; }
+.k-trend { border-top: 2px dashed #ff9d6b; }
+
+.ts-total {
+  margin-left: auto;
+  color: var(--accent);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 820px) {
+  #ts { right: 12px; left: 12px; width: auto; top: auto; bottom: 12px; }
+}
+
+@media (max-width: 640px) {
+  #legend { width: calc(100% - 24px); }
+  #header { max-width: calc(100% - 24px); }
+}
+
+.views button:disabled {
+  opacity: 0.4;
+  cursor: default;
+  background: transparent;
+}

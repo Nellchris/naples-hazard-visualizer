@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Naples / Campi Flegrei — EGMS ground motion</title>
+
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" />
+  <!-- ?v= is a cache buster: bump it when app.css or src/ changes, so browsers
+       (and the GitHub Pages CDN) fetch the new file instead of a stale copy. -->
+  <link rel="stylesheet" href="style/app.css?v=7" />
+</head>
+<body>
+  <div id="map"></div>
+
+  <div id="header" class="panel">
+    <button id="intro-open" type="button" aria-label="About this map" title="About this map">?</button>
+    <h1>Naples / Campi Flegrei — ground motion</h1>
+    <p>EGMS Ortho (L3) InSAR, 2020–2024 · 19,306 points</p>
+
+    <div class="toggle" role="group" aria-label="Displacement component">
+      <button data-component="U" aria-pressed="true">
+        <b>Vertical</b><span>up / down</span>
+      </button>
+      <button data-component="E" aria-pressed="false">
+        <b>East–West</b><span>horizontal</span>
+      </button>
+    </div>
+
+    <div class="views">
+      <button id="fit-caldera" type="button">Campi Flegrei</button>
+      <button id="fit-aoi" type="button">Full AOI</button>
+      <button id="terrain-toggle" type="button" aria-pressed="true">Terrain</button>
+      <button id="buildings-toggle" type="button" aria-pressed="true">Buildings</button>
+      <button id="tl-open" type="button" disabled title="Loading points …">Animate</button>
+    </div>
+    <div id="basemap-toggle" class="views" role="group" aria-label="Basemap">
+      <button data-basemap="light" class="active" aria-pressed="true">Light</button>
+      <button data-basemap="dark" aria-pressed="false">Dark</button>
+    </div>
+    <div id="buildings-hint" hidden>Buildings appear from zoom 14 — zoom in</div>
+  </div>
+
+  <div id="intro-backdrop" hidden></div>
+  <div id="intro" class="panel" role="dialog" aria-modal="true"
+       aria-labelledby="intro-h" hidden>
+    <button id="intro-close" type="button" aria-label="Close">×</button>
+    <h2 id="intro-h">Campi Flegrei</h2>
+    <p>
+      An active volcanic caldera beneath Pozzuoli, on the western edge of Naples —
+      and one of the most densely populated volcanic areas in Europe.
+    </p>
+
+    <h3>What you're seeing: bradyseism</h3>
+    <p>
+      The ground is slowly rising, pushed up by pressure from fluids and magma at
+      depth. Between 2020 and 2024 the centre of the caldera rose about
+      <b>700 mm</b> — and the rate is still increasing.
+    </p>
+
+    <h3>The two views</h3>
+    <ul>
+      <li>
+        <b>Vertical</b> — column height and colour show ground moving
+        <b>up</b> (uplift) or <b>down</b> (subsidence).
+      </li>
+      <li>
+        <b>East–West</b> — colour shows horizontal spreading: the caldera pushes
+        outward, so ground <b>east</b> of the centre moves east and ground
+        <b>west</b> of it moves west.
+      </li>
+    </ul>
+
+    <h3>About the buildings</h3>
+    <p>
+      OpenStreetMap footprints, shown for context. About <b>98%</b> carry no height
+      tag and use an assumed 6 m, so read them as footprints — not real heights.
+    </p>
+
+    <h3>How to use this</h3>
+    <ul>
+      <li>Drag to pan, scroll to zoom, right-drag to tilt and rotate.</li>
+      <li>
+        <b>Vertical</b> and <b>East–West</b> show two different motions — up/down
+        versus horizontal spreading. Each has its own colour scale.
+      </li>
+      <li>
+        <b>Animate</b> plays the uplift accumulating across 2020–2024. The first
+        press takes a few seconds to load the full series.
+      </li>
+      <li>
+        <b>Buildings</b> only draw past zoom 14. Below that they're hidden
+        deliberately, not missing.
+      </li>
+      <li><b>Light</b> / <b>Dark</b> swaps the basemap; relief reads better on Light.</li>
+      <li>Click any point for its displacement history.</li>
+    </ul>
+
+    <div id="intro-foot">
+      <span>EGMS Ortho (L3) InSAR · 2020–2024 · 19,306 measurement points.</span>
+      <button id="intro-go" type="button">Explore the map</button>
+    </div>
+  </div>
+
+  <div id="status" class="panel" hidden>loading …</div>
+
+  <div id="ts" class="panel" hidden>
+    <div id="ts-head">
+      <div>
+        <div id="ts-title"></div>
+        <div id="ts-meta"></div>
+      </div>
+      <button id="ts-close" type="button" aria-label="Close time series">×</button>
+    </div>
+    <div id="ts-chart"></div>
+    <div id="ts-note"></div>
+  </div>
+
+  <div id="timeline" class="panel" hidden>
+    <button id="tl-play" type="button" aria-label="Play">▶</button>
+    <div id="tl-main">
+      <input id="tl-range" type="range" min="0" max="302" value="0" step="1"
+             aria-label="Acquisition date" />
+      <div id="tl-labels">
+        <span id="tl-date">—</span>
+        <span id="tl-cum">cumulative displacement</span>
+      </div>
+    </div>
+    <button id="tl-exit" type="button" title="Back to mean velocity">Reset</button>
+  </div>
+
+  <div id="legend" class="panel">
+    <div id="legend-title"></div>
+    <div id="legend-bar"></div>
+    <div id="legend-ticks"></div>
+    <div id="legend-ends"></div>
+    <div id="legend-note"></div>
+    <div id="readout"></div>
+  </div>
+
+  <!-- UMD bundles: define the globals `maplibregl` and `deck` before our modules run -->
+  <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+  <script src="https://unpkg.com/deck.gl@9.0.38/dist.min.js"></script>
+  <script src="https://unpkg.com/@deck.gl/mapbox@9.0.38/dist.min.js"></script>
+
+  <script type="module" src="src/map.js?v=7"></script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+geopandas>=1.0
+pyproj>=3.6
+shapely>=2.0
+pandas>=2.0
+pyarrow>=15.0
+requests>=2.31
+# DEM step (03) also needs, outside pip: GDAL CLI (gdalbuildvrt/gdalwarp/gdal2tiles.py)
+# and: pip install rio-rgbify

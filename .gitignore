@@ -1,0 +1,12 @@
+# Large downloads (EGMS CSVs, DEM tifs, OSM) — never committed.
+# NOTE: git has no trailing comments. A pattern like `data/raw/  # note` is read
+# as a literal path including the "#", so the rule silently does nothing. Keep
+# every comment on its own line.
+data/raw/
+
+node_modules/
+__pycache__/
+*.pyc
+.DS_Store
+
+# data/processed/ IS committed so GitHub Pages can serve it (see README size note).

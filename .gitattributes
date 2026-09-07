@@ -1,0 +1,10 @@
+# Source keeps LF in the repo regardless of platform.
+* text=auto eol=lf
+
+# Processed data is served byte-for-byte by GitHub Pages — never let git rewrite
+# line endings inside it. On Windows the default would convert LF to CRLF and
+# silently change every GeoJSON it touches.
+*.geojson -text
+*.parquet -text binary
+*.png      -text binary
+*.tif      -text binary

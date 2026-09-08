@@ -1,124 +1,58 @@
-# Naples / Campi Flegrei — WebGL Urban Hazard & Terrain Visualizer
+# Naples / Campi Flegrei — Ground Motion Visualizer
 
-Interactive WebGL scene combining **ground-motion (EGMS InSAR)**, **terrain
-(Copernicus DEM GLO-30)**, and **extruded OSM buildings** over the Naples /
-Pozzuoli corridor. Entirely free/open-source data and tooling; deploys as a
-static site to GitHub Pages.
+An interactive 3D map that shows how the ground is moving around Naples, Italy — built entirely from free, open satellite and map data.
 
-The strongest signal in the AOI is the **Campi Flegrei bradyseism** — active
-caldera uplift of up to ~+90 mm/yr around Pozzuoli.
+### 🔗 View it live: **https://nellchris.github.io/naples-hazard-visualizer/**
 
-## Structure
-```
-pipeline/   data prep (Python + GDAL), run once locally — see pipeline/README.md
-data/
-  raw/        downloaded source data (gitignored)
-  processed/  web-ready outputs the app reads (committed)
-app/        MapLibre GL JS + deck.gl client (built in the app phase)
-  src/config.js   shared constants — AOI, data paths, color ramp
-sample_run/ synthetic-sourced sample outputs for reference (NOT real data)
-docs/       design reference (scaffold doc)
-```
+*(Works best on a desktop browser. The first press of “Animate” takes a few seconds to load five years of data.)*
 
-## Pipeline / app split
-`pipeline/` produces files; `app/` consumes them. The live site has no Python or
-GDAL dependency — it just fetches the processed GeoJSON / Parquet / tiles. This is
-the load-bearing decision; keep it.
+---
 
-## Data status — all three sources built
-| layer | source | output | size |
-|---|---|---|---|
-| Ground motion | EGMS Ortho L3, tile E46N19, 2020–2024, U + E | `egms_points_{U,E}.geojson` + `egms_timeseries_{U,E}.parquet` | 33 MB |
-| Terrain | Copernicus DEM GLO-30, tile N40/E014 | `dem/{z}/{x}/{y}.png`, z8–14, 3,838 tiles | 71 MB |
-| Buildings | OSM via Overpass | `buildings.geojson`, 88,181 footprints | 27 MB |
+## What this shows
 
-`data/processed/` totals ~132 MB. That is fine for GitHub Pages (no single file
-is near the 100 MB limit) and `buildings.geojson` gzips 27 MB → 4 MB in transit.
+Just west of Naples sits **Campi Flegrei**, an active volcanic caldera underneath the town of Pozzuoli and one of the most densely populated volcanic areas in Europe. The ground there is slowly rising — a phenomenon called **bradyseism**, driven by pressure from fluids and magma deep underground. Between 2020 and 2024 the centre of the caldera rose by roughly **700 mm**, and it is still rising, faster each year.
 
-## Running the pipeline
-```
-pip install -r pipeline/requirements.txt
+This map lets you *see* that movement. It combines three layers into one 3D scene in your browser:
 
-# EGMS — once per component. Do NOT pass --min-coherence for L3 (see below).
-python pipeline/02_egms_prep.py   --input data/raw/egms/EGMS_L3_E46N19_100km_U_2020_2024_1.csv   --outdir data/processed --component U
-python pipeline/02_egms_prep.py   --input data/raw/egms/EGMS_L3_E46N19_100km_E_2020_2024_1.csv   --outdir data/processed --component E
+- **Ground motion** — satellite radar measurements of how fast each spot is rising or sinking. Around Pozzuoli the ground is going up by as much as **145 mm per year**.
+- **Terrain** — the real shape of the land, including Vesuvius and the surrounding hills.
+- **Buildings** — the city’s footprints, for context, so you can see the urban area sitting on top of the moving ground.
 
-bash pipeline/03_dem_prep.sh      # needs GDAL CLI + rio-rgbify
-python pipeline/04_osm_buildings.py
-```
+## How to use it
 
-### QA checklist — check these against the printed report (real data ≠ synthetic)
-1. **points raw→AOI > 0.** If 0, the tile/AOI don't overlap (shouldn't happen —
-   E46N19 is confirmed) or a column name differs. E46N19 covers lon 13.26–14.49,
-   lat 40.10–41.05. Observed: **68,052 → 19,306** per component.
-2. **velocity range — differs by component.**
-   - **U (vertical):** a strong **positive** (uplift) cluster near Pozzuoli
-     (~14.14, 40.83). Observed peak **+145.2 mm/yr** ~0.9 km from the centre,
-     decaying monotonically outward. If the peak isn't clearly positive, the E
-     file may have been passed as U.
-   - **E (east-west):** **mean ~0** with a roughly **symmetric ± range** (radial
-     expansion). Observed mean **+1.6**, range −59.1…+70.6, and the sign flips
-     across the caldera (west −13.1 / east +24.8 within 6 km). A near-zero mean
-     is correct here, not an error.
-3. **point count after clip.** 19,306 per component — comfortably inside what raw
-   GeoJSON handles. Past ~100k, switch to deck.gl binary attributes or PMTiles
-   (docs/ scaffold §4.4).
-4. **coherence gate — not applicable to L3.** The Ortho L3 product has **no
-   `temporal_coherence` column** (it lives in the L2 products; L3 is already
-   quality-screened and GNSS-calibrated). Passing `--min-coherence` now prints a
-   warning and applies no filter. `rmse_ts` is the available quality proxy.
+Once the map loads, an intro panel explains what you’re looking at (you can reopen it any time with the **?** button). The main things you can do:
 
-### Two traps this pipeline already works around
-- **Terrarium ≠ `rgbify -b -10000 -i 0.1`.** rio-rgbify packs
-  `value = base + (R·65536 + G·256 + B)·interval`, so those params are **Mapbox**
-  Terrain-RGB. Terrarium needs `-b -32768 -i 0.00390625`. Mismatch renders as
-  elevations ~10⁴ m out. `03_dem_prep.sh` and `demEncoding` in `app/src/config.js`
-  must stay in step.
-- **gdal2tiles pads with transparent black.** MapLibre's `raster-dem` ignores the
-  alpha channel, and rgb(0,0,0) decodes to −32768 m — deep pits at every partly
-  covered tile (99.9% of a z8 tile). `_dem_fill_nodata.py` rewrites that padding
-  to encode 0 m; `03` runs it automatically.
+- **Drag** to move, **scroll** to zoom, **right-click-drag** to tilt into 3D.
+- **Vertical / East–West toggle** — switch between two kinds of movement: up-and-down (the caldera bulging upward) and sideways (the ground spreading outward from the centre).
+- **Animate** — press play to watch the ground inflate across 2020–2024. The rise visibly speeds up toward the end — that acceleration is the real signal, not an effect.
+- **Zoom in** to bring in the buildings — they only appear once you’re close enough to see individual streets, so an empty city at wide zoom is intentional.
+- **Click any point** to see its full history — how much that exact spot moved, month by month.
+- **Light / Dark** basemap toggle — the terrain relief reads best on the light map.
 
-## The app
-`app/index.html` + ES modules in `app/src/`. No build step, no bundler — MapLibre
-GL JS and deck.gl load as UMD globals from a CDN.
+## How it’s built
 
-| file | role |
+Everything uses **free and open-source data and tools**, and the whole thing runs as a static website — no server, no database.
+
+The three data layers come from public sources:
+
+| Layer | Source |
 |---|---|
-| `config.js` | AOI, colour ramps, zoom gates, animation constants — tune here |
-| `map.js` | MapLibre init, terrain, buildings, overlay wiring, all UI handlers |
-| `egms-layer.js` | point loading, colour ramp, deck.gl layer construction |
-| `timeseries.js` | Parquet reader (hyparquet), per-point series + full matrix |
-| `timeline.js` | playback controller for the 303 acquisition dates |
+| Ground motion | **EGMS** — the European Ground Motion Service, which publishes ready-made satellite radar (InSAR) measurements for all of Europe |
+| Terrain | **Copernicus DEM** — a free global elevation model |
+| Buildings | **OpenStreetMap** building footprints |
 
-Things worth knowing before editing:
-- **Point z is pre-multiplied by `TERRAIN.exaggeration`.** MapLibre scales terrain
-  by it; deck.gl does not. Both sides read the one constant, so they stay locked.
-- **Playback steps on `setTimeout`, not `requestAnimationFrame`.** rAF is
-  suspended in background/hidden tabs, which freezes playback with no error.
-  Advancing a date is a data step; deck.gl schedules its own repaint.
-- **Assets carry `?v=N`.** Bump it in `index.html` *and* every import specifier in
-  `app/src/` together — versioning only some paths would load a module twice under
-  two URLs and split its state.
-- **`[hidden] { display: none !important }`** is load-bearing: panels with an
-  explicit `display` otherwise ignore the `hidden` attribute.
+The project has two clean halves. A **data pipeline** (Python) downloads the raw data, trims it to the Naples area, and converts it into web-ready files — this runs once, on my machine. The **web app** (built with MapLibre GL JS and deck.gl for WebGL rendering) then just reads those prepared files in the browser. Full setup and reproduction steps are in [`pipeline/README.md`](pipeline/README.md).
 
-## Local preview
-Serve the **repo root** (not `app/`) and open `/app/`, matching how
-`deploy.yml` publishes:
-```
-python -m http.server 8765
-# → http://127.0.0.1:8765/app/
-```
+### The one thing that made it possible
 
-## Deploy
-Static, via `.github/workflows/deploy.yml` — it uploads the repo root, so the site
-lives at `https://<user>.github.io/<repo>/app/`. Enable Pages with
-**Settings → Pages → Source: GitHub Actions**. Processed data is committed so
-Pages can serve it; `data/raw/` is gitignored and must stay that way.
+Getting satellite radar ground-motion data normally means processing raw radar images yourself — a heavy, specialist job. The key move here was using **EGMS**, which has already done that processing and publishes the finished measurements for free. That single substitution turned the hardest part of the project into a straightforward download, and it’s what let the whole thing be built on open data.
 
-## Attribution
-- EGMS © European Union, Copernicus Land Monitoring Service / EEA.
-- Copernicus WorldDEM-30 © DLR e.V. 2010–2014 and © Airbus DS GmbH 2014–2018,
-  provided under COPERNICUS by the EU and ESA.
-- Building data © OpenStreetMap contributors (ODbL).
+## Data sources & credit
+
+- **EGMS** © European Union, Copernicus Land Monitoring Service / European Environment Agency.
+- **Copernicus WorldDEM-30** © DLR e.V. 2010–2014 and © Airbus DS GmbH 2014–2018, provided under COPERNICUS by the EU and ESA.
+- **Building data** © OpenStreetMap contributors (ODbL).
+
+---
+
+*Exploring how open geospatial data can make environmental hazards visible and understandable.*
